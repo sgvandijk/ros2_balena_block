@@ -1,0 +1,67 @@
+FROM balenalib/%%BALENA_ARCH%%-raspbian:bookworm
+
+RUN apt update \
+    && DEBIAN_FRONTEND=noninteractive apt install -y \
+      curl \
+      locales \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN locale-gen en_US en_US.UTF-8 \
+    && dpkg-reconfigure locales
+
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu bullseye main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+RUN apt update\
+    && DEBIAN_FRONTEND=noninteractive apt install -y \
+      python3-flake8-docstrings \
+      python3-pip \
+      python3-pytest-cov \
+      ros-dev-tools \
+      colcon \
+    && rm -rf /var/lib/apt/lists/*
+
+# RUN apt update \
+#   && DEBIAN_FRONTEND=noninteractive apt install -y \
+#      python3-flake8-blind-except \
+#      python3-flake8-builtins \
+#      python3-flake8-class-newline \
+#      python3-flake8-comprehensions \
+#      python3-flake8-deprecated \
+#      python3-flake8-import-order \
+#      python3-flake8-quotes \
+#      python3-pytest-repeat \
+#      python3-pytest-rerunfailures \
+#   && rm -rf /var/lib/apt/lists/*
+   
+RUN mkdir -p /opt/ros/humble/src \
+  && cd /opt/ros/humble \
+  && vcs import --input https://raw.githubusercontent.com/ros2/ros2/humble/ros2.repos src
+
+RUN cd /opt/ros/humble \
+    && touch src/ros2/rviz/AMENT_IGNORE \
+    && touch src/ros-visualization/AMENT_IGNORE \
+    && touch src/ros2/system_tests/AMENT_IGNORE
+
+ENV BUILD_PKGS="demo_nodes_cpp ros2launch"
+
+RUN colcon list --packages-up-to ${BUILD_PKGS} --paths-only
+
+RUN apt update \
+    && rosdep init \
+    && ROS_OS_OVERRIDE=debian rosdep update \
+    && cd /opt/ros/humble \
+    && DEBIAN_FRONTEND=noninteractive ROS_OS_OVERRIDE=debian rosdep install --os=debian:bullseye \
+      --from-paths $(colcon list --packages-up-to ${BUILD_PKGS} --paths-only) \
+      --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers" \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN cd /opt/ros/humble \
+    && colcon build \
+    --merge-install \
+    --packages-up-to ${BUILD_PKGS} \
+    --cmake-args ' -DCMAKE_CXX_STANDARD_LIBRARIES=-latomic' ' -DBUILD_TESTING=OFF' ' -DCMAKE_BUILD_TYPE=RelWithDebInfo' \
+    --event-handlers console_cohesion+
+
+CMD sh -c "echo 'Hello, world!' && . /opt/ros/humble/install/setup.sh && ros2 launch demo_nodes_cpp talker_listener.launch.py"
