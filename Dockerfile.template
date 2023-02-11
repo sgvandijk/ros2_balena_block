@@ -93,7 +93,4 @@ RUN apt update \
     --ignore-src -y -r \
   && rm -rf /var/lib/apt/lists/*
 
-RUN install_packages \
-    v4l-utils
-
-CMD sh -c "echo 'Hello, world!' && . /opt/ros/humble/setup.sh && ros2 launch demo_nodes_cpp talker_listener.launch.py || while true; do sleep 1; done"
+CMD sh -c ". /opt/ros/humble/setup.sh && ros2 launch demo_nodes_cpp talker_listener.launch.py || while true; do sleep 1; done"
