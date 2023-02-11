@@ -1,7 +1,7 @@
 name: ROS 2
 description: >-
   Base image with ROS 2 installed from source
-version: 1.0.0
+version: 1.0.1
 type: sw.block
 assets:
   repository:
