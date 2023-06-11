@@ -1,5 +1,5 @@
 # Use multi-stage builder to build ROS 2 packages
-FROM balenalib/%%BALENA_MACHINE_NAME%%:bullseye-build AS builder
+FROM balenalib/%%BALENA_ARCH%%:bullseye-build AS builder
 
 # Mostly follow ROS 2's instructions to build from source:
 # https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html
@@ -59,7 +59,7 @@ RUN cd /tmp/ros/humble \
     --install-base /opt/ros/humble
 
 # Construct actual image
-FROM balenalib/%%BALENA_MACHINE_NAME%%:bullseye-run
+FROM balenalib/%%BALENA_ARCH%%:bullseye-run
 
 # Copy ROS from the builder image above
 COPY --from=builder /opt/ros/humble /opt/ros/humble
