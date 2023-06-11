@@ -11,7 +11,7 @@ assets:
   logo:
     type: blob.asset
     data:
-      url: 'https://github.com/sgvandijk/ros2_balena_block/-/raw/main/ros2-block.png'
+      url: 'https://raw.githubusercontent.com/sgvandijk/ros2_balena_block/main/ros2-block.png'
 data:
   defaultDeviceType: raspberrypi4-64
   supportedDeviceTypes:
